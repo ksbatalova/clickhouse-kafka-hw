@@ -28,8 +28,6 @@ requirements.txt             зависимости Python
 Датасет не хранится в репозитории: train.csv весит 138 МБ,
 что превышает лимит GitHub на размер файла.
 
-Скачайте файлы с Kaggle и положите в папку data/:
-
 - data/train.csv — 786 431 строка
 - data/test.csv — 262 144 строки
 
@@ -89,12 +87,6 @@ docker compose exec clickhouse clickhouse-client \
   --query "SELECT count() FROM transactions"
 ```
 
-Для быстрой проверки пайплайна можно ограничить объём:
-
-```bash
-python scripts/producer.py --file data/train.csv --limit 100
-```
-
 ### 6. Выполнить запрос и выгрузить результат
 
 ```bash
@@ -113,17 +105,6 @@ docker compose exec -T clickhouse clickhouse-client \
 3. `transactions_mv`, материализованное представление — срабатывает
    на новые сообщения в очереди и вставляет их в хранилище.
 
-Поле transaction_time приходит в формате YYYY-MM-DD HH:MM без секунд,
-который ClickHouse не приводит к DateTime автоматически. Поэтому
-в Kafka-таблице оно объявлено как String, а конвертация выполняется
-в материализованном представлении через parseDateTimeBestEffort.
-
-Настройка kafka_skip_broken_messages = 100 не даёт пайплайну
-остановиться на единичных некорректных сообщениях.
-
-Сеть Docker требует двух listener'ов у Kafka: ClickHouse подключается
-внутри сети по kafka:9092, producer с хост-машины — по localhost:29092.
-
 ## Целевой запрос
 
 Категория наибольшей транзакции по каждому штату:
@@ -137,9 +118,6 @@ FROM fraud.transactions
 GROUP BY us_state
 ORDER BY us_state;
 ```
-
-argMax(cat_id, amount) возвращает значение cat_id из той строки,
-где amount максимален — без самосоединения или оконных функций.
 
 Фрагмент результата:
 
