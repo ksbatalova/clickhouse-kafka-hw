@@ -199,6 +199,7 @@ sql/04_benchmark.sql создаёт таблицу transactions_opt
 что позволяет сравнить обе схемы на одном наборе строк без перезаливки
 топика.
 
+```bash
 docker compose exec -T clickhouse clickhouse-client \
   --user analyst --password analyst --multiquery < sql/04_benchmark.sql
 Размер на диске:
@@ -209,6 +210,8 @@ docker compose exec clickhouse clickhouse-client \
            FROM system.parts
            WHERE table IN ('transactions','transactions_opt') AND active
            GROUP BY table"
+```
+    
 Время и объём чтения:
 
 ```bash
@@ -225,10 +228,11 @@ docker compose exec clickhouse clickhouse-client \
 
 ## Применение оптимизированной схемы с нуля
 
-sql/02_ddl_optimized.sql пересоздаёт таблицы, поэтому данные нужно
+`sql/02_ddl_optimized.sql` пересоздаёт таблицы, поэтому данные нужно
 загрузить заново. Порядок: пересоздать топик, применить DDL,
 запустить producer.
 
+```bash
 docker compose exec kafka /opt/kafka/bin/kafka-topics.sh \
   --bootstrap-server localhost:9092 --delete --topic transactions
 
@@ -241,17 +245,11 @@ docker compose exec -T clickhouse clickhouse-client \
 
 python scripts/producer.py --file data/train.csv
 python scripts/producer.py --file data/test.csv
+```
+
 ## Остановка
 
 ```bash
 docker compose down        # остановить контейнеры
 docker compose down -v     # вместе с данными ClickHouse
 ```
-
-## Ограничения
-
-Сборка учебная и рассчитана на локальный запуск. Kafka работает
-по PLAINTEXT без аутентификации, учётные данные ClickHouse заданы
-в docker-compose.yml открытым текстом, порты проброшены на localhost.
-Для работы с реальными данными потребуются SASL/TLS для Kafka
-и хранение секретов вне репозитория.
