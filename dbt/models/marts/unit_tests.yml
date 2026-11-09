@@ -1,0 +1,16 @@
+version: 2
+
+unit_tests:
+  - name: test_mart_fraud_by_category_rates
+    description: "Проверяет расчёт fraud_rate и сумм по категориям"
+    model: mart_fraud_by_category
+    given:
+      - input: ref('stg_transactions')
+        rows:
+          - {category: 'A', amount: 100.0, is_fraud: 1}
+          - {category: 'A', amount: 50.0, is_fraud: 0}
+          - {category: 'B', amount: 10.0, is_fraud: 0}
+    expect:
+      rows:
+        - {category: 'A', total_transactions: 2, fraud_transactions: 1, fraud_rate: 50.0, total_amount: 150.0, fraud_amount: 100.0}
+        - {category: 'B', total_transactions: 1, fraud_transactions: 0, fraud_rate: 0.0, total_amount: 10.0, fraud_amount: 0.0}

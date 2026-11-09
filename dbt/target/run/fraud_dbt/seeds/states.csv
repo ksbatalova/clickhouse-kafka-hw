@@ -1,0 +1,26 @@
+
+    
+    
+    
+    create table `fraud`.`states` 
+   ("state_code" String,"state_name" String,"region" String)
+    
+  engine = MergeTree()
+    
+      order by (tuple())
+    
+  ;
+    -- dbt seed --
+    
+  
+  
+
+  
+    
+
+    
+  
+
+
+;
+  

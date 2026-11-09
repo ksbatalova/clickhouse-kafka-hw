@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: "Очищенные и типизированные транзакции из fraud.transactions: добавлены дата, час, день недели, сегмент суммы (макрос amount_bucket), идентификатор клиента и расстояние до мерчанта"
+    columns:
+      - name: transaction_time
+        description: "Время транзакции"
+        tests:
+          - not_null
+      - name: transaction_date
+        description: "Дата транзакции"
+        tests:
+          - not_null
+      - name: transaction_hour
+        description: "Час транзакции (0-23)"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 23
+      - name: day_of_week
+        description: "День недели (1 = понедельник, 7 = воскресенье)"
+        tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6, 7]
+                quote: false
+      - name: merchant_name
+        description: "Название мерчанта без пробелов по краям"
+        tests:
+          - not_null
+      - name: category
+        description: "Категория транзакции (14 значений)"
+        tests:
+          - not_null
+      - name: amount
+        description: "Сумма транзакции"
+        tests:
+          - not_null
+      - name: amount_segment
+        description: "Сегмент суммы, считается макросом amount_bucket"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['small', 'medium', 'large', 'very_large']
+      - name: is_large_transaction
+        description: "1, если сумма не меньше 500"
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: customer_id
+        description: "Идентификатор клиента: имя и фамилия через пробел (отдельного ID в данных нет)"
+        tests:
+          - not_null
+      - name: gender
+        description: "Пол клиента (M/F)"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['M', 'F']
+      - name: us_state
+        description: "Штат США"
+        tests:
+          - not_null
+      - name: distance_km
+        description: "Расстояние от клиента до мерчанта в километрах"
+      - name: is_fraud
+        description: "Признак фрода: 1 - фрод, 0 - нет"
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false

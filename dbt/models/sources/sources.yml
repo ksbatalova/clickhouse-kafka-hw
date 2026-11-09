@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: fraud
+    description: "Сырые данные о транзакциях, загруженные из Kafka в ClickHouse (ДЗ по ClickHouse)"
+    schema: fraud
+    tables:
+      - name: transactions
+        description: "Транзакции с признаком фрода (MergeTree-таблица, наполняется через Kafka и materialized view)"
