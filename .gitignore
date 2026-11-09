@@ -1,4 +1,10 @@
 data/*.csv
 __pycache__/
 .venv/
-.DS_Store
+.DS_Storedbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/

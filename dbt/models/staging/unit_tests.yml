@@ -1,0 +1,17 @@
+version: 2
+
+unit_tests:
+  - name: test_stg_transactions_segments_and_cleaning
+    description: "Проверяет макрос amount_bucket и очистку полей в staging"
+    model: stg_transactions
+    given:
+      - input: source('fraud', 'transactions')
+        rows:
+          - {transaction_time: '2024-01-01 10:00:00', merch: ' Shop A ', cat_id: 'food', amount: 20.0, name_1: 'Ann', name_2: 'Lee', gender: 'f', us_state: 'TX', lat: 30.0, lon: -97.0, merchant_lat: 30.1, merchant_lon: -97.1, target: 0}
+          - {transaction_time: '2024-01-01 11:00:00', merch: 'Shop B', cat_id: 'travel', amount: 120.0, name_1: 'Bob', name_2: 'Ray', gender: 'm', us_state: 'CA', lat: 34.0, lon: -118.0, merchant_lat: 34.1, merchant_lon: -118.1, target: 1}
+          - {transaction_time: '2024-01-01 12:00:00', merch: 'Shop C', cat_id: 'travel', amount: 600.0, name_1: 'Cy', name_2: 'Day', gender: 'm', us_state: 'NY', lat: 40.0, lon: -74.0, merchant_lat: 40.1, merchant_lon: -74.1, target: 0}
+    expect:
+      rows:
+        - {merchant_name: 'Shop A', amount_segment: 'small', gender: 'F', is_large_transaction: 0, is_fraud: 0, customer_id: 'Ann Lee'}
+        - {merchant_name: 'Shop B', amount_segment: 'medium', gender: 'M', is_large_transaction: 0, is_fraud: 1, customer_id: 'Bob Ray'}
+        - {merchant_name: 'Shop C', amount_segment: 'large', gender: 'M', is_large_transaction: 1, is_fraud: 0, customer_id: 'Cy Day'}

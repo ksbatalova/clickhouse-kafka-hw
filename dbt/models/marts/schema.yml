@@ -1,0 +1,159 @@
+version: 2
+
+models:
+  - name: mart_daily_state_metrics
+    description: "Дневные метрики по штатам: число транзакций, сумма, средний чек, P95 и доля крупных транзакций"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [transaction_date, us_state]
+    columns:
+      - name: transaction_date
+        description: "Дата"
+        tests:
+          - not_null
+      - name: us_state
+        description: "Штат США"
+        tests:
+          - not_null
+      - name: transactions_count
+        description: "Количество транзакций за день в штате"
+      - name: total_amount
+        description: "Суммарный оборот"
+      - name: avg_amount
+        description: "Средний чек"
+      - name: p95_amount
+        description: "95-й процентиль суммы транзакции"
+      - name: large_transactions_share
+        description: "Доля крупных транзакций (от 0 до 1)"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: mart_fraud_by_category
+    description: "Анализ фрода по категориям: какие категории чаще всего подвержены мошенничеству"
+    columns:
+      - name: category
+        description: "Категория транзакции"
+        tests:
+          - not_null
+          - unique
+      - name: total_transactions
+        description: "Всего транзакций в категории"
+      - name: fraud_transactions
+        description: "Число фродовых транзакций"
+      - name: fraud_rate
+        description: "Доля фрода в процентах (0-100)"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: total_amount
+        description: "Сумма всех транзакций категории"
+      - name: fraud_amount
+        description: "Сумма фродовых транзакций"
+
+  - name: mart_fraud_by_state
+    description: "Географический анализ фрода по штатам США (с названием штата и регионом из справочника states)"
+    columns:
+      - name: us_state
+        description: "Код штата"
+        tests:
+          - not_null
+          - unique
+      - name: state_name
+        description: "Название штата из seed states"
+      - name: region
+        description: "Регион США из seed states"
+      - name: fraud_rate
+        description: "Доля фрода в процентах (0-100)"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: unique_customers
+        description: "Число уникальных клиентов"
+      - name: unique_merchants
+        description: "Число уникальных мерчантов"
+
+  - name: mart_customer_risk_profile
+    description: "Профиль риска клиентов: история транзакций, доля фрода и сегмент риска HIGH/MEDIUM/LOW"
+    columns:
+      - name: customer_id
+        description: "Идентификатор клиента (имя и фамилия)"
+        tests:
+          - not_null
+          - unique
+      - name: transactions_count
+        description: "Число транзакций клиента"
+      - name: avg_amount
+        description: "Средний чек клиента"
+      - name: fraud_rate
+        description: "Доля фрода у клиента в процентах"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: risk_segment
+        description: "HIGH - доля фрода от 5%, MEDIUM - есть хотя бы один фрод, LOW - фрода нет"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['HIGH', 'MEDIUM', 'LOW']
+
+  - name: mart_hourly_fraud_pattern
+    description: "Временные паттерны фрода по дням недели и часам; окна с долей фрода более чем вдвое выше средней помечены как рискованные"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [day_of_week, transaction_hour]
+    columns:
+      - name: day_of_week
+        description: "День недели (1 = понедельник, 7 = воскресенье)"
+        tests:
+          - not_null
+      - name: transaction_hour
+        description: "Час суток (0-23)"
+        tests:
+          - not_null
+      - name: fraud_rate
+        description: "Доля фрода в окне в процентах"
+      - name: overall_fraud_rate
+        description: "Средняя доля фрода по всему датасету в процентах"
+      - name: is_high_risk_window
+        description: "1, если доля фрода в окне более чем вдвое выше средней"
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+
+  - name: mart_merchant_analytics
+    description: "Аналитика по мерчантам: оборот, доля фрода и флаг подозрительности"
+    columns:
+      - name: merchant_name
+        description: "Название мерчанта"
+        tests:
+          - not_null
+          - unique
+      - name: turnover
+        description: "Оборот мерчанта"
+      - name: fraud_rate
+        description: "Доля фрода в процентах"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100
+      - name: is_suspicious
+        description: "1, если у мерчанта не менее 20 транзакций и доля фрода от 2%"
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
