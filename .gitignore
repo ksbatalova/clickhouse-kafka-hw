@@ -4,3 +4,7 @@ __pycache__/
 .DS_Storedbt/target/
 dbt/dbt_packages/
 dbt/logs/
+
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
